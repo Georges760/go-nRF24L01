@@ -116,9 +116,13 @@ const (
 	W_TX_PAYLOAD_NO_ACK Command = 0xB0
 )
 
+const (
+	MOSI = 0
+	MISO = 1
+)
+
 type SpiTx struct {
-	Mosi byte
-	Miso byte
+	Data [2]byte
 }
 
 func InterpretTransaction(txs []SpiTx) (ret string, err error) {
@@ -127,7 +131,7 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 		return
 	}
 	// Parse first MOSI byte to interprete Command
-	switch txs[0].Mosi {
+	switch txs[0].Data[MOSI] {
 	case byte(FLUSH_TX):
 		ret = "Flush TX FIFO"
 	case byte(FLUSH_RX):
@@ -142,7 +146,7 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 			err = errors.New("2 SPI TX are needed")
 			return
 		}
-		ret += " : " + strconv.Itoa(int(txs[1].Miso))
+		ret += " : " + strconv.Itoa(int(txs[1].Data[MISO]))
 	case byte(R_RX_PAYLOAD):
 		ret = "Read RX-payload"
 		/* 1 to 32 bytes Data */
@@ -150,10 +154,7 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 			err = errors.New("Between 2 and 33 SPI TX are needed")
 			return
 		}
-		ret += " : 0x"
-		for i := 1; i < len(txs); i++ {
-			ret += strconv.FormatUint(uint64(txs[i].Miso), 16)
-		}
+		ret += dumpPayload(txs, MISO)
 	case byte(W_TX_PAYLOAD):
 		ret = "Write TX-payload"
 		/* 1 to 32 bytes Data */
@@ -161,10 +162,7 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 			err = errors.New("Between 2 and 33 SPI TX are needed")
 			return
 		}
-		ret += " : 0x"
-		for i := 1; i < len(txs); i++ {
-			ret += strconv.FormatUint(uint64(txs[i].Mosi), 16)
-		}
+		ret += dumpPayload(txs, MOSI)
 	case byte(W_TX_PAYLOAD_NO_ACK):
 		ret = "Write TX-payload without ACK"
 		/* 1 to 32 bytes Data */
@@ -172,52 +170,51 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 			err = errors.New("Between 2 and 33 SPI TX are needed")
 			return
 		}
-		ret += " : 0x"
-		for i := 1; i < len(txs); i++ {
-			ret += strconv.FormatUint(uint64(txs[i].Mosi), 16)
-		}
+		ret += dumpPayload(txs, MOSI)
 	default:
 		/* Special case of Command containing value */
-		if (txs[0].Mosi &^ REGISTER_MASK) == byte(R_REGISTER) {
-			ret = "Read Register " + getRegisterName(Register(txs[0].Mosi&REGISTER_MASK))
+		if (txs[0].Data[MOSI] &^ REGISTER_MASK) == byte(R_REGISTER) {
+			ret = "Read Register " + getRegisterName(Register(txs[0].Data[MOSI]&REGISTER_MASK))
 			/* 1 to 5 bytes Data */
 			if len(txs) < 2 || len(txs) > 6 {
 				err = errors.New("Between 2 and 6 SPI TX are needed")
 				return
 			}
-			ret += " : 0x"
-			for i := 1; i < len(txs); i++ {
-				ret += strconv.FormatUint(uint64(txs[i].Miso), 16)
-			}
+			ret += dumpPayload(txs, MISO)
 		} else {
-			if (txs[0].Mosi &^ REGISTER_MASK) == byte(W_REGISTER) {
-				ret = "Write Register " + getRegisterName(Register(txs[0].Mosi&REGISTER_MASK))
+			if (txs[0].Data[MOSI] &^ REGISTER_MASK) == byte(W_REGISTER) {
+				ret = "Write Register " + getRegisterName(Register(txs[0].Data[MOSI]&REGISTER_MASK))
 				/* 1 to 5 bytes Data */
 				if len(txs) < 2 || len(txs) > 6 {
 					err = errors.New("Between 2 and 6 SPI TX are needed")
 					return
 				}
-				ret += " : 0x"
-				for i := 1; i < len(txs); i++ {
-					ret += strconv.FormatUint(uint64(txs[i].Mosi), 16)
-				}
+				ret += dumpPayload(txs, MOSI)
 			} else {
-				if (txs[0].Mosi &^ PIPE_MASK) == byte(W_ACK_PAYLOAD) {
-					ret = "Write ACK Payload for pipe 0x" + strconv.FormatUint(uint64(txs[0].Mosi&PIPE_MASK), 16)
+				if (txs[0].Data[MOSI] &^ PIPE_MASK) == byte(W_ACK_PAYLOAD) {
+					ret = "Write ACK Payload for pipe 0x" + strconv.FormatUint(uint64(txs[0].Data[MOSI]&PIPE_MASK), 16)
 					/* 1 to 32 bytes Data */
 					if len(txs) < 2 || len(txs) > 33 {
 						err = errors.New("Between 2 and 33 SPI TX are needed")
 						return
 					}
-					ret += " : 0x"
-					for i := 1; i < len(txs); i++ {
-						ret += strconv.FormatUint(uint64(txs[i].Mosi), 16)
-					}
+					ret += dumpPayload(txs, MOSI)
 				} else {
 					err = errors.New("Unknown Command")
 				}
 			}
 		}
+	}
+	return
+}
+
+func dumpPayload(txs []SpiTx, stream int) (ret string) {
+	ret += " : 0x"
+	for i := 1; i < len(txs); i++ {
+		if txs[i].Data[stream] < 16 {
+			ret += "0"
+		}
+		ret += strconv.FormatUint(uint64(txs[i].Data[stream]), 16)
 	}
 	return
 }

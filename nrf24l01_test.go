@@ -7,12 +7,12 @@ import (
 func Test_InterpretTransaction(t *testing.T) {
 	// Case 1
 	spi := []SpiTx{
-		{0x2A, 0x0E},
-		{0xD2, 0x00},
-		{0xF0, 0x00},
-		{0xF0, 0x00},
-		{0xF0, 0x00},
-		{0xF0, 0x00},
+		{[2]byte{0x2A, 0x0E}},
+		{[2]byte{0xD2, 0x00}},
+		{[2]byte{0xF0, 0x00}},
+		{[2]byte{0xF0, 0x00}},
+		{[2]byte{0xF0, 0x00}},
+		{[2]byte{0xF0, 0x00}},
 	}
 	ret, err := InterpretTransaction(spi)
 	if err != nil {
@@ -24,7 +24,7 @@ func Test_InterpretTransaction(t *testing.T) {
 
 	// Case 2
 	spi = []SpiTx{
-		{0xE2, 0x0E},
+		{[2]byte{0xE2, 0x0E}},
 	}
 	ret, err = InterpretTransaction(spi)
 	if err != nil {
@@ -36,14 +36,14 @@ func Test_InterpretTransaction(t *testing.T) {
 
 	// Case 3
 	spi = []SpiTx{
-		{0x1C, 0x0E},
-		{0xFF, 0x00},
+		{[2]byte{0x1C, 0x0E}},
+		{[2]byte{0xFF, 0x00}},
 	}
 	ret, err = InterpretTransaction(spi)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ret != "Read Register DYNPD : 0x0" {
+	if ret != "Read Register DYNPD : 0x00" {
 		t.Fatal("Return String Mismatch")
 	}
 }
