@@ -125,7 +125,7 @@ type SpiTx struct {
 	Data [2]byte
 }
 
-func InterpretTransaction(txs []SpiTx) (ret string, err error) {
+func InterpretTransaction(txs []SpiTx, disreg bool) (ret string, err error) {
 	if len(txs) == 0 {
 		err = errors.New("At least 1 SPI TX is needed")
 		return
@@ -133,20 +133,20 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 	// Parse first MOSI byte to interprete Command
 	switch txs[0].Data[MOSI] {
 	case byte(FLUSH_TX):
-		ret = "Flush TX FIFO"
+		ret = "Flush TX FIFO\n"
 	case byte(FLUSH_RX):
-		ret = "Flush RX FIFO"
+		ret = "Flush RX FIFO\n"
 	case byte(REUSE_TX_PL):
-		ret = "Reuse last transmitted payload"
+		ret = "Reuse last transmitted payload\n"
 	case byte(NOP):
-		ret = "NOP"
+		ret = "NOP\n"
 	case byte(R_RX_PL_WID):
 		ret = "RX payload width"
 		if len(txs) != 2 {
 			err = errors.New("2 SPI TX are needed")
 			return
 		}
-		ret += " : " + strconv.Itoa(int(txs[1].Data[MISO]))
+		ret += " : " + strconv.Itoa(int(txs[1].Data[MISO])) + "\n"
 	case byte(R_RX_PAYLOAD):
 		ret = "Read RX-payload"
 		/* 1 to 32 bytes Data */
@@ -181,6 +181,9 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 				return
 			}
 			ret += dumpPayload(txs, MISO)
+			if disreg {
+				ret += dissectRegister(Register(txs[0].Data[MOSI]&REGISTER_MASK), txs[1].Data[MISO])
+			}
 		} else {
 			if (txs[0].Data[MOSI] &^ REGISTER_MASK) == byte(W_REGISTER) {
 				ret = "Write Register " + getRegisterName(Register(txs[0].Data[MOSI]&REGISTER_MASK))
@@ -190,6 +193,9 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 					return
 				}
 				ret += dumpPayload(txs, MOSI)
+				if disreg {
+					ret += dissectRegister(Register(txs[0].Data[MOSI]&REGISTER_MASK), txs[1].Data[MOSI])
+				}
 			} else {
 				if (txs[0].Data[MOSI] &^ PIPE_MASK) == byte(W_ACK_PAYLOAD) {
 					ret = "Write ACK Payload for pipe 0x" + strconv.FormatUint(uint64(txs[0].Data[MOSI]&PIPE_MASK), 16)
@@ -208,6 +214,14 @@ func InterpretTransaction(txs []SpiTx) (ret string, err error) {
 	return
 }
 
+func dissectRegister(reg Register, val uint8) (ret string) {
+	switch reg {
+	case REG_NRF_CONFIG:
+		ret += dissectNrfConfig(val)
+	}
+	return
+}
+
 func dumpPayload(txs []SpiTx, stream int) (ret string) {
 	ret += " : 0x"
 	for i := 1; i < len(txs); i++ {
@@ -216,6 +230,7 @@ func dumpPayload(txs []SpiTx, stream int) (ret string) {
 		}
 		ret += strconv.FormatUint(uint64(txs[i].Data[stream]), 16)
 	}
+	ret += "\n"
 	return
 }
 

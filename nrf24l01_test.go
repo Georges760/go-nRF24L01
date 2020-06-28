@@ -14,7 +14,7 @@ func Test_InterpretTransaction(t *testing.T) {
 		{[2]byte{0xF0, 0x00}},
 		{[2]byte{0xF0, 0x00}},
 	}
-	ret, err := InterpretTransaction(spi)
+	ret, err := InterpretTransaction(spi, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func Test_InterpretTransaction(t *testing.T) {
 	spi = []SpiTx{
 		{[2]byte{0xE2, 0x0E}},
 	}
-	ret, err = InterpretTransaction(spi)
+	ret, err = InterpretTransaction(spi, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func Test_InterpretTransaction(t *testing.T) {
 		{[2]byte{0x1C, 0x0E}},
 		{[2]byte{0xFF, 0x00}},
 	}
-	ret, err = InterpretTransaction(spi)
+	ret, err = InterpretTransaction(spi, false)
 	if err != nil {
 		t.Fatal(err)
 	}

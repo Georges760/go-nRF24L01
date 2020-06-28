@@ -14,6 +14,8 @@ func main() {
 	pfile := flag.String("f", "", "CSV file from Saleae Decoded Protocol export")
 	var cmdTimeout float64
 	flag.Float64Var(&cmdTimeout, "t", 0.002, "Command Timeout in Second")
+	var disreg bool
+	flag.BoolVar(&disreg, "r", false, "Dissect Registers")
 	var debug bool
 	flag.BoolVar(&debug, "d", false, "Enable DEBUG mode")
 	flag.Parse()
@@ -39,7 +41,7 @@ func main() {
 			if debug {
 				log.Println("spi24:", spi24)
 			}
-			txt, err := nrf24l01.InterpretTransaction(spi24)
+			txt, err := nrf24l01.InterpretTransaction(spi24, disreg)
 			fmt.Println(txt)
 			if err != nil {
 				log.Println(err)
@@ -49,7 +51,7 @@ func main() {
 		spi24 = append(spi24, nrf24l01.SpiTx{[2]byte{byte(tx.Mosi), byte(tx.Miso)}})
 		lastTxSecond = tx.Second
 	}
-	txt, err := nrf24l01.InterpretTransaction(spi24)
+	txt, err := nrf24l01.InterpretTransaction(spi24, disreg)
 	fmt.Println(txt)
 	if err != nil {
 		log.Println(err)
