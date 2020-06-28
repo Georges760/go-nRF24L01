@@ -218,6 +218,18 @@ func dissectRegister(reg Register, val uint8) (ret string) {
 	switch reg {
 	case REG_NRF_CONFIG:
 		ret += dissectNrfConfig(val)
+	case REG_EN_AA:
+		ret += dissectEnAa(val)
+	case REG_EN_RXADDR:
+		ret += dissectEnRxaddr(val)
+	case REG_SETUP_AW:
+		ret += dissectSetupAw(val)
+	case REG_SETUP_RETR:
+		ret += dissectSetupRetr(val)
+	case REG_RF_CH:
+		ret += dissectRfCh(val)
+	case REG_RF_SETUP:
+		ret += dissectRfSetup(val)
 	}
 	return
 }

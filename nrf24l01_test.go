@@ -1,6 +1,7 @@
 package nrf24l01
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -18,8 +19,9 @@ func Test_InterpretTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ret != "Write Register RX_ADDR_P0 : 0xd2f0f0f0f0" {
-		t.Fatal("Return String Mismatch")
+	if ret != "Write Register RX_ADDR_P0 : 0xd2f0f0f0f0\n" {
+		fmt.Println(ret)
+		t.Fatal("Return String Mismatch ")
 	}
 
 	// Case 2
@@ -30,7 +32,8 @@ func Test_InterpretTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ret != "Flush RX FIFO" {
+	if ret != "Flush RX FIFO\n" {
+		fmt.Println(ret)
 		t.Fatal("Return String Mismatch")
 	}
 
@@ -43,7 +46,8 @@ func Test_InterpretTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ret != "Read Register DYNPD : 0x00" {
+	if ret != "Read Register DYNPD : 0x00\n" {
+		fmt.Println(ret)
 		t.Fatal("Return String Mismatch")
 	}
 }
